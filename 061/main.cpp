@@ -2,37 +2,34 @@
 #include <algorithm>
 #include <unistd.h> // STDIN_FILENO
 #include <vector>
-#include <max_a.h>
+
+#include <algorithm.h>
+
+
+// answer is 6310
 
 int main(int,char**)
 {
-   size_t total = 0;
-   std::vector<char> answers;
-   char last = 0;
-   char ch;
+   size_t total = 0;            // sum of all groups answeers
+   std::vector<char> answers;   // answers per group
+   char last = 0;               // used to find end of entry and end of group
+   char ch;                     // temp for input
    while(read(STDIN_FILENO, &ch, 1) > 0)
    {
-      if(ch == '\n')
+      if(ch != '\n')
+         sb::store_u(answers,ch); // unique sorted store
+      else if(last == '\n')
       {
-         if(last == '\n')
-         {
-            total += answers.size();
-            answers.clear();
-         }
-         last = ch;
-         continue;
+         // update the tally and clear the entry
+         total += answers.size();
+         answers.clear();
       }
 
-      auto a = std::lower_bound(answers.begin(),answers.end(),ch);
-      if(a == answers.end())
-         answers.push_back(ch);
-      else if(*a != ch)
-         answers.insert(a,ch);
       last = ch;
    }
 
+   // in case termination was not "\n\n" we need to update the tally
    total += answers.size();
-   answers.clear();
 
    std::cout << total << std::endl;
 
