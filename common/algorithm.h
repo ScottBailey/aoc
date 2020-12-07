@@ -17,7 +17,7 @@ inline void intersection_a(T& t, const T& u)
 
 /// store unique values
 template<typename T>
-void store_u(T& t, const typename T::value_type& v)
+inline void store_u(T& t, const typename T::value_type& v)
 {
    // unique, sorted store into vector
    auto a = std::lower_bound(t.begin(),t.end(),v);
