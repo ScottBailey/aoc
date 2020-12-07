@@ -14,6 +14,15 @@ inline void intersection_a(T& t, const T& u)
    t.swap(out);
 }
 
+/// t becomes t union u
+template <typename T>
+inline void union_a(T& t, const T& u)
+{
+   T out;
+   std::set_union(t.begin(),t.end(),u.begin(),u.end(),std::back_inserter(out));
+   t.swap(out);
+}
+
 
 /// store unique values
 template<typename T>
