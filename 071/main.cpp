@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <chrono>
 
 // 179
 
@@ -76,6 +77,7 @@ node::list_t parse_line()
 }
 
 
+// find the outer bag information for a given inner color
 node::list_t find_outer(const node::list_t& list, const std::string& color)
 {
    node::list_t rv;
@@ -83,11 +85,14 @@ node::list_t find_outer(const node::list_t& list, const std::string& color)
       rv.push_back(*a);
    return rv;
 }
+// find the outer bag information for the given node
 node::list_t find_outer(const node::list_t& list, const node& n) { return find_outer(list,n.outer); }
 
 
 int main(int,char**)
 {
+   auto time_start = std::chrono::high_resolution_clock::now();
+
    node::list_t list;
    size_t line =0;
    for(;;)
@@ -99,6 +104,7 @@ int main(int,char**)
       for(auto& a : temp)
          list.push_back(a);
    }
+   // sort so find is efficient
    std::sort(list.begin(),list.end());
 
    node::list_t result = find_outer(list,"shiny gold");
@@ -136,5 +142,8 @@ int main(int,char**)
    //std::cout << a << std::endl;
 
    std::cout << "unique outer choices: " << result.size() << std::endl;
+
+   auto time_end = std::chrono::high_resolution_clock::now();
+   std::cout << std::chrono::duration_cast<std::chrono::microseconds>(time_end-time_start).count() << std::endl;
    return 0;
 }

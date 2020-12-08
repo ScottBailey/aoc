@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <vector>
 #include <from_string.h>
+#include <chrono>
 
 // 18925
 
@@ -16,7 +17,7 @@ struct node {
          return inner < rhs.inner;
       return outer < rhs.outer;
    }
-   bool operator==(const node& rhs) { return (outer == rhs.outer) && (inner == rhs.inner); }
+   bool operator==(const node& rhs) { return (outer == rhs.outer) && (inner == rhs.inner) && (count == rhs.count); }
    bool operator<(const std::string& rhs_outer) const { return outer < rhs_outer; }
    bool operator==(const std::string& rhs_outer) const { return outer == rhs_outer; }
    bool operator!=(const std::string& rhs_outer) const { return outer != rhs_outer; }
@@ -45,7 +46,8 @@ node::list_t parse_line()
    // now read the list of bags it contains
    for(;;)
    {
-      // read <n> <color> <color> bag[s,.]
+      // read the inner count: "<n> <color> <color> bag[s,.]" OR "no other bags."
+      // start with the bag count, either an int or the word "no"
       if(!(std::cin >> temp))
          return rv;
       if(temp == "no") // "no other bags."
@@ -78,6 +80,7 @@ node::list_t parse_line()
 }
 
 
+// find the inner bag information for a given outer color
 node::list_t find_inner(const node::list_t& list, const std::string& color)
 {
    node::list_t rv;
@@ -85,32 +88,27 @@ node::list_t find_inner(const node::list_t& list, const std::string& color)
       rv.push_back(*a);
    return rv;
 }
+// find the inner bag information for the given node
 node::list_t find_inner(const node::list_t& list, const node& n) { return find_inner(list,n.outer); }
 
-//size_t depth=0;
-//std::string indent() { return std::string(depth,' '); }
 
 uint64_t count_inner(const node::list_t& list, const node& n)
 {
+   // is it a terminator? return 0
    if(n.inner == "no other")
       return 0;
 
-   //depth += 2;
-   //std::cout << indent() << "counting for " << n.inner << std::endl;
-
-   uint64_t rv = 1;
+   uint64_t rv = 1; // there is this bag, at minimum
    node::list_t sub = find_inner(list,n.inner);
    for(auto& a : sub)
    {
-      if(a.count)
-         rv += count_inner(list,a) * a.count;
+      // then all the minimums
+      rv += count_inner(list,a) * a.count;
    }
-
-   //std::cout << indent() << "counted for " << n.inner << " "<< rv << std::endl;
-   //depth -=2;
 
    return rv;
 }
+// outside call, so the first outer isn't included in the sum of bags
 uint64_t count_inner(const node::list_t& list, const std::string& color)
 {
    //std::cout << indent() << "counting for " << color << std::endl;
@@ -127,14 +125,14 @@ uint64_t count_inner(const node::list_t& list, const std::string& color)
 
 int main(int,char**)
 {
+   auto time_start = std::chrono::high_resolution_clock::now();
+
    node::list_t list;
-   size_t line =0;
    for(;;)
    {
       node::list_t temp = parse_line();
       if(temp.empty())
          break;
-      ++line;
       for(auto& a : temp)
          list.push_back(a);
    }
@@ -146,5 +144,7 @@ int main(int,char**)
 
    std::cout << count_inner(list,"shiny gold") << std::endl;
 
+   auto time_end = std::chrono::high_resolution_clock::now();
+   std::cout << std::chrono::duration_cast<std::chrono::microseconds>(time_end-time_start).count() << std::endl;
    return 0;
 }
