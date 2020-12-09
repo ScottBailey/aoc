@@ -37,7 +37,7 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wshadow -pedanti
 
 
 # list the directories, select out ONLY the directories matching [0-9]{3}
-file(GLOB all_files ${CMAKE_CURRENT_LIST_DIR}/[0-9][0-9][0-9])
+file(GLOB all_files ${CMAKE_CURRENT_LIST_DIR}/[0-2][0-9][1-2])
 foreach(i ${all_files} )
   if(IS_DIRECTORY ${i})
     get_filename_component( filename ${i} NAME)
