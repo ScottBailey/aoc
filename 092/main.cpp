@@ -2,14 +2,16 @@
 #include <chrono>
 
 #include <algorithm>
+#include <stdint.h>
 
 #include <load_vector.h>
-#include <stdint.h>
+#include <max_a.h>
+
 
 const size_t preamble_size{25};
 
+// weakness: 925549 + 2086871 = 3012420
 
-// Critical number 20874512 found at index 537
 
 int main(int,char**)
 {
@@ -22,7 +24,7 @@ int main(int,char**)
       return -1;
    }
 
-
+   uint64_t critical_number=0;
    std::vector<uint64_t> t(preamble_size);  // temporary vector
    for(size_t i=preamble_size; i < v.size(); ++i)
    {
@@ -43,11 +45,41 @@ int main(int,char**)
       }
       if(!found)
       {
-         std::cout << "Critical number " << curr << " found at index " << i << "\n";
+         critical_number = curr;
+         std::cout << "Critical number " << critical_number << " found at index " << i << "\n";
          break;
       }
    }
 
+   // now find the encryption weakness
+   // WARN: this does not sanity check and could result in an infinite loop
+   uint64_t sum = v[0];
+   size_t l=0;
+   size_t r=1;
+   for(;;)
+   {
+      while((r < v.size()) && (sum < critical_number))
+      {
+         sum += v[r];
+         ++r;
+      }
+      if(sum == critical_number)
+      {
+         uint64_t min = v[l];
+         uint64_t max = v[l];
+         for(size_t i=l; i < r; ++i) {
+            sb::min_a(min,v[i]);
+            sb::max_a(max,v[i]);
+         }
+         std::cout << "weakness: " << min << " + " << max << " = " << min + max << "\n";
+         break;
+      }
+      while((l<r) && (sum > critical_number))
+      {
+         sum -= v[l];
+         ++l;
+      }
+   }
 
 
    auto time_end = std::chrono::high_resolution_clock::now();
