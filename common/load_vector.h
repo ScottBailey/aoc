@@ -6,7 +6,7 @@
 
 
 template<typename T>
-std::vector<T> load_vector(std::istream& ios)
+std::vector<T> load_vector(std::istream& ios = std::cin)
 {
    std::vector<T> rv;
    T temp;
