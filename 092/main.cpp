@@ -5,10 +5,9 @@
 #include <stdint.h>
 
 #include <load_vector.h>
-#include <max_a.h>
 
 
-const size_t preamble_size{25};
+size_t preamble_size{25};
 
 // weakness: 925549 + 2086871 = 3012420
 
@@ -17,7 +16,9 @@ int main(int,char**)
 {
    auto time_start = std::chrono::high_resolution_clock::now();
 
-   std::vector<uint64_t> v = load_vector<uint64_t>(std::cin);
+   std::vector<uint64_t> v = load_vector<uint64_t>();
+   if(v.size() < preamble_size)
+      preamble_size = 5;
    if(v.size() < preamble_size)
    {
       std::cerr << "premature end of data" << std::endl;
@@ -53,30 +54,27 @@ int main(int,char**)
 
    // now find the encryption weakness
    // WARN: this does not sanity check and could result in an infinite loop
-   uint64_t sum = v[0];
-   size_t l=0;
-   size_t r=1;
+   auto l = v.begin();
+   auto r = v.begin()+1;
+   uint64_t sum = *l;
    for(;;)
    {
-      while((r < v.size()) && (sum < critical_number))
+      // increment the right
+      while((r != v.end()) && (sum < critical_number))
       {
-         sum += v[r];
+         sum += *r;;
          ++r;
       }
       if(sum == critical_number)
       {
-         uint64_t min = v[l];
-         uint64_t max = v[l];
-         for(size_t i=l; i < r; ++i) {
-            sb::min_a(min,v[i]);
-            sb::max_a(max,v[i]);
-         }
-         std::cout << "weakness: " << min << " + " << max << " = " << min + max << "\n";
+         // find and report min and max before exiting
+         const auto[min, max] = std::minmax_element(l,r);
+         std::cout << "weakness: " << *min << " + " << *max << " = " << *min + *max << "\n";
          break;
       }
       while((l<r) && (sum > critical_number))
       {
-         sum -= v[l];
+         sum -= *l;
          ++l;
       }
    }
