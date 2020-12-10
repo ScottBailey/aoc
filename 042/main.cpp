@@ -1,12 +1,16 @@
 #include <iostream>
+#include <chrono>
 #include <string>
-#include <map>
 #include <unistd.h> // STDIN_FILENO
 #include <from_string.h>
 
-
+#if 0
+# include <map>
 using map_t = std::map<std::string,std::string>;
-
+#else
+# include <unordered_map>
+using map_t = std::unordered_map<std::string,std::string>;
+#endif
 
 const std::string byr{"byr"};
 const std::string iyr{"iyr"};
@@ -158,6 +162,8 @@ bool validate(const map_t& m)
 
 int main(int,char**)
 {
+   auto time_start = std::chrono::high_resolution_clock::now();
+
    size_t count = 0;
    size_t bad = 0;
    for(;;)
@@ -175,5 +181,8 @@ int main(int,char**)
    std::cout << "valid: " << count << std::endl;
    std::cout << "bad: " << bad << std::endl;
 
+
+   auto time_end = std::chrono::high_resolution_clock::now();
+   std::cout << "\ntime: " << std::chrono::duration_cast<std::chrono::microseconds>(time_end-time_start).count() << " us" << std::endl;
    return 0;
 }
