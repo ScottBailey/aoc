@@ -5,11 +5,10 @@
 #include <stdint.h>
 
 #include <load_vector.h>
-#include <max_a.h>
 
 // 259172170858496
 
-const bool debug=true;
+const bool debug=false;
 
 int main(int,char**)
 {
