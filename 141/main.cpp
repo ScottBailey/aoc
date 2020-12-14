@@ -7,24 +7,6 @@
 
 //const bool debug=false;
 
-inline unsigned from_ch(char ch)
-{
-   unsigned temp = ch - '0';
-   if(temp > 9)
-   {
-      std::cerr << "current_time() - unexpected input: " << ch << std::endl;
-      exit(-1);
-   }
-   return temp;
-}
-
-/*
-mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X
-mem[8] = 11
-mem[7] = 101
-mem[8] = 0
-*/
-
 inline void strip3()
 {
    char ch;
