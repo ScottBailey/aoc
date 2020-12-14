@@ -7,7 +7,7 @@
 
 // 530015546283687
 
-const bool debug=true;
+const bool debug=false;
 
 static_assert(sizeof(unsigned) >= 4, "type to small");
 
@@ -135,6 +135,7 @@ uint64_t brute_faster(const std::vector<info>& v_in)
    uint64_t r0 = v.front().route;
    v.erase(v.begin());
 
+   // Now we are going to find a bus that leaves bus0's route minutes after r0.
    uint64_t re = 0;
    for(auto i=v.begin(); i != v.end(); ++i)
    {
@@ -150,8 +151,11 @@ uint64_t brute_faster(const std::vector<info>& v_in)
       exit(-1);
    }
 
+   // the additive value (mult) is r0 times the found route.
    uint64_t mult = r0*re;
-   uint64_t when = mult-r0;
+   uint64_t when = mult-r0; // The initial value is actually r0*(re-1) - the first instance where time%r0 = 0 and (time+re.index)%re = 0!
+
+   // iterate until you find it
    for(;;)
    {
       bool found = true;
@@ -170,7 +174,8 @@ uint64_t brute_faster(const std::vector<info>& v_in)
 }
 
 
-void brute_thread_i(const std::vector<info>& v, uint64_t when, uint64_t add)
+void brute_thread_i(const std::chrono::time_point<std::chrono::high_resolution_clock>& time_start,
+      const std::vector<info>& v, uint64_t when, uint64_t add)
 {
    for(;;)
    {
@@ -185,6 +190,9 @@ void brute_thread_i(const std::vector<info>& v, uint64_t when, uint64_t add)
       if(found)
       {
          std::cout << "Found: " << when << "\n";
+
+         auto time_end = std::chrono::high_resolution_clock::now();
+         std::cout << "\ntime: " << std::chrono::duration_cast<std::chrono::microseconds>(time_end-time_start).count() << " us\n";
          exit(0);
       }
 
@@ -193,7 +201,7 @@ void brute_thread_i(const std::vector<info>& v, uint64_t when, uint64_t add)
 }
 
 
-void brute_thread(const std::vector<info>& v_in)
+void brute_thread(const std::chrono::time_point<std::chrono::high_resolution_clock>& time_start, const std::vector<info>& v_in)
 {
    std::vector<info> v = v_in;
 
@@ -226,12 +234,12 @@ void brute_thread(const std::vector<info>& v_in)
    uint64_t mult = r0*re;
    uint64_t when = mult-r0;
 
-   size_t tc=8;
+   size_t tc=8; // thread count
    std::vector<std::thread> threads;
    threads.reserve(tc);
 
    for(size_t i=0; i < tc; ++i)
-      threads.emplace_back( [&](){ brute_thread_i(v, when + (mult*i), mult*tc); } );
+      threads.emplace_back( [&](){ brute_thread_i(time_start, v, when + (mult*i), mult*tc); } );
 
    threads[0].join();
 }
@@ -250,10 +258,10 @@ int main(int,char**)
 
    dump(debug,v);
 
-   uint64_t when = brute_faster(v);
-   std::cout << when << std::endl;
+   //uint64_t when = brute_faster(v);
+   //std::cout << when << std::endl;
 
-   //brute_thread(v);
+   brute_thread(time_start,v);
 
    auto time_end = std::chrono::high_resolution_clock::now();
    std::cout << "\ntime: " << std::chrono::duration_cast<std::chrono::microseconds>(time_end-time_start).count() << " us" << std::endl;
