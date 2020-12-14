@@ -23,10 +23,10 @@ function(aoc_target target_name)
     common
     )
 
-  #  target_link_libraries(${target_name}
-  #    ${Boost_LIBRARIES} # boost
-  #    ${Extra_Libs}      # thread and/or socket libraries
-  #    )
+  if(${target_name} STREQUAL "132")
+    target_link_libraries(${target_name} pthread)  # for threads
+  endif()
+
 
 endfunction()
 

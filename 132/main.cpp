@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <stdint.h>
 #include <unistd.h> // STDIN_FILENO
+#include <thread>
 
 // 530015546283687
 
@@ -169,6 +170,73 @@ uint64_t brute_faster(const std::vector<info>& v_in)
 }
 
 
+void brute_thread_i(const std::vector<info>& v, uint64_t when, uint64_t add)
+{
+   for(;;)
+   {
+      bool found = true;
+      for(const auto& a : v)
+      {
+         if(((when+a.index) % a.route) == 0)
+            continue;
+         found = false;
+         break;
+      }
+      if(found)
+      {
+         std::cout << "Found: " << when << "\n";
+         exit(0);
+      }
+
+      when += add;
+   }
+}
+
+
+void brute_thread(const std::vector<info>& v_in)
+{
+   std::vector<info> v = v_in;
+
+   // sanity check
+   if(v.front().index != 0)
+   {
+      std::cerr << "expected zero index" << std::endl;
+      exit(-1);
+   }
+
+   // get r0 and remove it from the list
+   uint64_t r0 = v.front().route;
+   v.erase(v.begin());
+
+   uint64_t re = 0;
+   for(auto i=v.begin(); i != v.end(); ++i)
+   {
+      if(i->index % r0)
+         continue;
+      re = i->route;
+      v.erase(i);
+      break;
+   }
+   if(!re)
+   {
+      std::cerr << "failed to find multiplier" << std::endl;
+      exit(-1);
+   }
+
+   uint64_t mult = r0*re;
+   uint64_t when = mult-r0;
+
+   size_t tc=8;
+   std::vector<std::thread> threads;
+   threads.reserve(tc);
+
+   for(size_t i=0; i < tc; ++i)
+      threads.emplace_back( [&](){ brute_thread_i(v, when + (mult*i), mult*tc); } );
+
+   threads[0].join();
+}
+
+
 int main(int,char**)
 {
    auto time_start = std::chrono::high_resolution_clock::now();
@@ -184,6 +252,8 @@ int main(int,char**)
 
    uint64_t when = brute_faster(v);
    std::cout << when << std::endl;
+
+   //brute_thread(v);
 
    auto time_end = std::chrono::high_resolution_clock::now();
    std::cout << "\ntime: " << std::chrono::duration_cast<std::chrono::microseconds>(time_end-time_start).count() << " us" << std::endl;
