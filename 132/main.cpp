@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <unistd.h> // STDIN_FILENO
 
+// 530015546283687
+
 const bool debug=true;
 
 static_assert(sizeof(unsigned) >= 4, "type to small");
@@ -79,18 +81,9 @@ inline void dump(bool d, std::vector<info> v)
 }
 
 
-int main(int,char**)
+uint64_t brute_slow(const std::vector<info>& v_in)
 {
-   auto time_start = std::chrono::high_resolution_clock::now();
-
-   std::vector<info> v = load_routes();
-   if(v.empty())
-   {
-      std::cerr << "premature end of input";
-      return -1;
-   }
-
-   dump(debug,v);
+   std::vector<info> v = v_in;
 
    // brute force approach
    std::sort(v.begin(), v.end());
@@ -102,7 +95,7 @@ int main(int,char**)
    if(largest.index > largest.route)
    {
       std::cerr << "problem with expected input" << std::endl;
-      return -1;
+      exit(-1);
    }
 
    uint64_t when = largest.route - largest.index;
@@ -119,17 +112,77 @@ int main(int,char**)
       }
 
       if(found)
-         break;
+         return when;
 
-      uint64_t last_when = when;
       when += largest.route;
-      if(when < last_when)
-      {
-         std::cerr << "overflow" << std::endl;
-         return -1;
-      }
+   }
+}
+
+
+uint64_t brute_faster(const std::vector<info>& v_in)
+{
+   std::vector<info> v = v_in;
+
+   // sanity check
+   if(v.front().index != 0)
+   {
+      std::cerr << "expected zero index" << std::endl;
+      exit(-1);
    }
 
+   // get r0 and remove it from the list
+   uint64_t r0 = v.front().route;
+   v.erase(v.begin());
+
+   uint64_t re = 0;
+   for(auto i=v.begin(); i != v.end(); ++i)
+   {
+      if(i->index % r0)
+         continue;
+      re = i->route;
+      v.erase(i);
+      break;
+   }
+   if(!re)
+   {
+      std::cerr << "failed to find multiplier" << std::endl;
+      exit(-1);
+   }
+
+   uint64_t mult = r0*re;
+   uint64_t when = mult-r0;
+   for(;;)
+   {
+      bool found = true;
+      for(const auto& a : v)
+      {
+         if(((when+a.index) % a.route) == 0)
+            continue;
+         found = false;
+         break;
+      }
+      if(found)
+         return when;
+
+      when += mult;
+   }
+}
+
+
+int main(int,char**)
+{
+   auto time_start = std::chrono::high_resolution_clock::now();
+
+   std::vector<info> v = load_routes();
+   if(v.empty())
+   {
+      std::cerr << "premature end of input";
+      return -1;
+   }
+
+   dump(debug,v);
+
+   uint64_t when = brute_faster(v);
    std::cout << when << std::endl;
 
    auto time_end = std::chrono::high_resolution_clock::now();
