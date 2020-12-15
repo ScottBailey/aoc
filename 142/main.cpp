@@ -5,7 +5,7 @@
 #include <unistd.h> // STDIN_FILENO
 #include <map>
 
-// it's not 2650717285842
+// 4275496544925
 
 const bool debug=false;
 
@@ -25,7 +25,11 @@ inline void load_mask(uint64_t& mask, std::vector<uint64_t>& sets)
    strip3(); // remove " = "
 
    sets.clear();
-   sets.push_back(0); // preload with zero value
+   sets.reserve(1024);  // this is a hack, we should load the string, then count the 'X' then reserve 2^n
+   sets.push_back(0);   // preload with zero value
+
+
+   // this could be optimized...
 
    mask = 0;
    char ch;
@@ -82,13 +86,22 @@ inline void load_mem(uint64_t& location, uint64_t& value)
 }
 
 
+inline uint64_t sum(const std::map<uint64_t,uint64_t>& v)
+{
+   uint64_t rv = 0;
+   for(auto [loc, val] : v)
+      rv += val;
+   return rv;
+}
+
+
 int main(int,char**)
 {
    auto time_start = std::chrono::high_resolution_clock::now();
 
    uint64_t mask=0;
    std::vector<uint64_t> sets;
-   std::map<unsigned,uint64_t> mem;
+   std::map<uint64_t,uint64_t> mem;
    for(;;)
    {
       // read 3 chars
@@ -121,11 +134,7 @@ int main(int,char**)
       }
    }
 
-   uint64_t mem_total = 0;
-   for(auto [loc, val] : mem)
-      mem_total += val;
-
-   std::cout << mem_total << "\n";
+   std::cout << sum(mem) << "\n";
 
    auto time_end = std::chrono::high_resolution_clock::now();
    std::cout << "\ntime: " << std::chrono::duration_cast<std::chrono::microseconds>(time_end-time_start).count() << " us" << std::endl;
