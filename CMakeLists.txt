@@ -16,7 +16,7 @@ function(aoc_target target_name)
   message( "trying to add: ${target_name}" )
 
   add_executable(${target_name}  ${src_cpp} ${src_h} ${common_h})
-  set_property(TARGET ${target_name} PROPERTY CXX_STANDARD 17)
+  set_property(TARGET ${target_name} PROPERTY CXX_STANDARD 20)
 
   target_include_directories( ${target_name} PRIVATE
     ${target_name}
