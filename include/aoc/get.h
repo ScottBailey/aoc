@@ -6,7 +6,7 @@
 
 namespace aoc {
 
-std::string get_line(std::istream& is);
+std::string get_line(std::istream& is=std::cin);
 
 } // namespace aoc
 
