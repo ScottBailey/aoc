@@ -54,7 +54,7 @@ private:
 
    void op_i(const token& m, const token& r);
 
-   static void solve_i(list_t& v, list_t::iterator first, list_t::iterator last);  // solve and erase for [first,last)
+   static void solve_i(list_t& v, const size_t first, const size_t end);
 
    op_t m_op;
    value_type m_val;
@@ -129,57 +129,53 @@ void token::op_i(const token& m, const token& r)
 }
 
 
-void token::solve_i(list_t& v, list_t::iterator fin, list_t::iterator lin) // solve for [first,last), erase [first,last)
+void token::solve_i(list_t& v, const size_t first, const size_t end)
 {
-   // next: an operation
-   // next +1: a value
-   token result(0);
-   auto next = fin+1;
-   auto last = lin;
-   if(!fin->is_paren())
-      result = *fin;
-   else
+   // there are guaranteed to be no parenthesis here
+   size_t cur = first+1;
+   while(cur+1 < end)
    {
-      ++next;
-      result = *(fin+1);
-      --last;
+      if(v[cur].op() == mult)
+         v[first] *= v[cur+1];
+      else
+         v[first] += v[cur+1];
+      cur += 2;
    }
-   while(next != last) // ignoring the error state: first + 2 == last (i.e. no operation)
-   {
-      result.op_i(*next,*(next+1));
-      next += 2;
-   }
-   *fin = result;
-   v.erase(fin+1,lin);
+   v.erase(v.begin()+first+1,v.begin()+end);
 }
 
 
 token::value_type token::solve(const token::list_t& lin)
 {
+   if(lin.empty())
+      return 0;
+
    token::list_t v = lin;
-   // do parens
-   for(;;)
+
+   // do parens first
    {
-      auto l1 = find(v.begin(),v.end(),token(token::paren_left));
-      if(l1 == v.end())
-         break;
-      for(;;)
+      size_t lp = v.size()-1;
+      while(lp < v.size()) // let it roll over for the exit condition
       {
-         auto l2 = find(l1+1,v.end(),token(token::paren_left));
-         if(l2 == v.end())
-            break;
-         l1 = l2;
+         if(v[lp].op() != paren_left)
+         {
+            --lp;
+            continue;
+         }
+         // found
+         size_t rp = lp+1;
+         while(v[rp] != paren_right) // not sanity checked for end()
+            ++rp;
+
+         solve_i(v,lp+1,rp);
+
+         v[lp] = v[lp+1];
+         v.erase(v.begin()+lp+1,v.begin()+lp+3);
+         --lp;
       }
-      auto r1 = find(l1+1,v.end(),token(token::paren_right));
-      if(r1 == v.end())
-      {
-         std::cerr << "bad input: mismatched parens\n" << lin << "\n";
-         return -1;
-      }
-      solve_i(v,l1,r1+1);
    }
 
-   solve_i(v,v.begin(),v.end());
+   solve_i(v,0,v.size());
 
    return v.front().value();
 }
