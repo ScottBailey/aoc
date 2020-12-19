@@ -119,6 +119,10 @@ void rule::load(std::istream& is)
 
 bool rule::test(const std::string& data, size_t& offset) const
 {
+   // sanity check
+   if(offset >= data.size())
+      return false;
+
    // are we at a char termination?
    if(m_char)
    {
