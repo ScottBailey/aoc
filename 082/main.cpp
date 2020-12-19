@@ -1,7 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <from_string.h>
+#include <sb/string/from.h>
 #include <unistd.h> // STDIN_FILENO
 #include <chrono>
 

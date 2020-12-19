@@ -2,7 +2,7 @@
 #include <chrono>
 #include <string>
 #include <unistd.h> // STDIN_FILENO
-#include <from_string.h>
+#include <sb/string/from.h>
 
 #if 0
 # include <map>

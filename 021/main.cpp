@@ -1,7 +1,7 @@
 #include <iostream>
 #include <charconv>
 #include <string>
-#include <from_string.h>
+#include <sb/string/from.h>
 
 int main(int,char**)
 {

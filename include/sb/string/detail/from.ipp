@@ -1,13 +1,12 @@
-#ifndef aoc_common_from_string_h
-#define aoc_common_from_string_h
-
-#include <string_view>
+#ifndef sb_string_from_h
+# error "direct inclusion error"
+#endif
 
 namespace sb {
 namespace string {
 
 template<typename T>
-bool from(const std::string_view& s, T& t)
+inline bool from(const std::string_view& s, T& t)
 {
    bool negative=false;
    t = 0;
@@ -16,6 +15,8 @@ bool from(const std::string_view& s, T& t)
       unsigned val = c - '0';
       if(val > 9)
       {
+         if(t || negative)
+            return false;
          if(c == '-')
             negative = true;
          else if(c != '+')
@@ -30,7 +31,5 @@ bool from(const std::string_view& s, T& t)
    return true;
 }
 
-}
-}
-
-#endif
+} // namespace string
+} // namespace sb
