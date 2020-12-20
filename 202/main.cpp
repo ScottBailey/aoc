@@ -6,6 +6,8 @@
 #include <sb/string.h>          // sb::string::parse(), sb::string::from()
 #include <bitset>
 #include <map>
+#include <assert.h>
+#include<math.h>
 
 //const bool debug=false;
 
@@ -17,6 +19,12 @@ enum facing {
 
    size = 4,
 
+   rnorth = 10,
+   reast = 11,
+   rsouth = 12,
+   rwest = 13,
+
+   bad = 100,
 };
 
 class tile
@@ -24,7 +32,9 @@ class tile
 public:
    //using map_t = std::map<unsigned,tile>;
    using list_t = std::vector<tile>;
-   using bits_t = uint16_t;
+   using mosaic_t = std::vector<std::vector<tile>>;
+
+   using edge_t = uint16_t;
 
    tile() : m_number{0}, m_data{0}, m_edges1{0}, m_edges2{0} {}
    tile(unsigned number) : m_number{number}, m_data{0}, m_edges1{0}, m_edges2{0} {}
@@ -33,17 +43,21 @@ public:
    unsigned number() const { return m_number; }
 
 
-   void make_west(const bits_t& w);
+   void make_west(const edge_t& w);
 
-   bits_t edge(facing f) const { return m_edges1[f]; }
-   bits_t redge(facing f) const { return m_edges2[f]; }
+   edge_t edge(facing f) const { return m_edges1[f]; }
+   edge_t redge(facing f) const { return m_edges2[f]; }
+
+   facing edge(const edge_t& b) const;
+   bool has_front(const edge_t& b) const { return edge(b) < facing::size; }
+   bool has(const edge_t& b) const { return edge(b) < facing::bad; }
 
 
    bool load(std::istream& is=std::cin);
    void dump() const;
 
    // all unique edges, forward and reverse
-   std::vector<bits_t> unique_edges() const;
+   std::vector<edge_t> unique_edges() const;
 
    bool operator==(const tile& rhs) const {return m_number == rhs.m_number; }
    bool operator<(const tile& rhs) const {return m_number < rhs.m_number; }
@@ -56,19 +70,31 @@ private:
 
    void make_edges();  // populate m_edges1 and m_edges2 from m_data
 
-   static bits_t reverse(const bits_t& n);
-   static bool get(const bits_t& b, size_t n);
-   static void set(bits_t& b, size_t n, bool val);
-   static std::string str1(bits_t n);
-   static std::string str2(bits_t n);
+   static edge_t reverse(const edge_t& n);
+   static bool get(const edge_t& b, size_t n);
+   static void set(edge_t& b, size_t n, bool val);
+   static std::string str1(edge_t n);
+   static std::string str2(edge_t n);
 private:
    unsigned m_number;
-   std::array<bits_t,10> m_data;
+   std::array<edge_t,10> m_data;
 
-   std::array<bits_t,facing::size> m_edges1;
-   std::array<bits_t,facing::size> m_edges2;
+   std::array<edge_t,facing::size> m_edges1;
+   std::array<edge_t,facing::size> m_edges2;
 };
 
+
+facing tile::edge(const edge_t& b) const
+{
+   for(size_t i=0; i < facing::size; ++i)
+   {
+      if(b == m_edges1[i])
+         return facing(i);
+      if(b == m_edges2[i])
+         return facing(i + rnorth);
+   }
+   return facing::bad;
+}
 
 
 void tile::flip_t2b()
@@ -89,7 +115,7 @@ void tile::flip_l2r()
 
 void tile::rotate()
 {
-   std::array<bits_t,10> orig{m_data};
+   std::array<edge_t,10> orig{m_data};
 
    for(size_t i = 0; i < 10; ++i) // these are, essentially, the columns when rotate 90 deg clockwise (col = 9-i)
    {
@@ -102,7 +128,7 @@ void tile::rotate()
 
 
 
-void tile::make_west(const bits_t& w)
+void tile::make_west(const edge_t& w)
 {
    // already there?
    if(w ==  m_edges1[west])
@@ -167,14 +193,14 @@ void tile::dump() const
    */
 }
 
-bool tile::get(const bits_t& b, size_t n)
+bool tile::get(const edge_t& b, size_t n)
 {
    unsigned mask = 1 << n;
    return b & mask;
 }
 
 
-void tile::set(bits_t& b, size_t n, bool val)
+void tile::set(edge_t& b, size_t n, bool val)
 {
    unsigned mask = 1 << n;
    b &= ~mask;
@@ -183,7 +209,7 @@ void tile::set(bits_t& b, size_t n, bool val)
 }
 
 
-std::string tile::str1(bits_t n)
+std::string tile::str1(edge_t n)
 {
    std::string rv;
    rv.reserve(10);
@@ -194,7 +220,7 @@ std::string tile::str1(bits_t n)
    }
    return rv;
 }
-std::string tile::str2(bits_t n)
+std::string tile::str2(edge_t n)
 {
    std::string rv;
    rv.reserve(10);
@@ -276,18 +302,18 @@ void tile::make_edges()
 }
 
 
-tile::bits_t tile::reverse(const bits_t& n)
+tile::edge_t tile::reverse(const edge_t& n)
 {
-   bits_t rv{0};
+   edge_t rv{0};
    for(size_t i =0; i < 10; ++i)
       set(rv, 9-i, get(n,i));
    return rv;
 }
 
 
-std::vector<tile::bits_t> tile::unique_edges() const
+std::vector<tile::edge_t> tile::unique_edges() const
 {
-   std::vector<bits_t> rv;
+   std::vector<edge_t> rv;
    rv.reserve(8);
    for(const auto& a : m_edges1)
       rv.push_back(a);
@@ -309,6 +335,17 @@ void dump(const tile::list_t& l)
 }
 
 
+void dump(const tile::mosaic_t& mosaic)
+{
+   for(const auto& r : mosaic)
+   {
+      for(const auto& t : r)
+         t.dump();
+      std::cout << "\n";
+   }
+}
+
+
 tile::list_t load(std::istream& is=std::cin)
 {
    tile::list_t rv;
@@ -324,11 +361,12 @@ tile::list_t load(std::istream& is=std::cin)
 }
 
 
+// return 4 corners rotated so the border is to the north west
 tile::list_t find_corners(const tile::list_t& tile_list)
 {
    tile::list_t rv;
 
-   std::map<tile::bits_t,std::vector<unsigned>> counts;
+   std::map<tile::edge_t,std::vector<unsigned>> counts;
    for(const auto& t : tile_list)
    {
       auto edge_list = t.unique_edges();
@@ -336,7 +374,7 @@ tile::list_t find_corners(const tile::list_t& tile_list)
          counts[edge].push_back(t.number());
    }
 
-   std::map<unsigned,std::vector<tile::bits_t>> tiles_edges;
+   std::map<unsigned,std::vector<tile::edge_t>> tiles_edges;
    for(const auto& [edge,list] : counts)
    {
       if(list.size() == 1)
@@ -351,17 +389,114 @@ tile::list_t find_corners(const tile::list_t& tile_list)
       if(edge_list.size() == 4) // it's a corner!!!
       {
          tile search(tile_number);
-         auto i = std::lower_bound(tile_list.begin(), tile_list.end(), search);
-         rv.push_back(*i);
+         auto t = *std::lower_bound(tile_list.begin(), tile_list.end(), search); // no sanity check dangerous!
+
+
+         // get 2 corners on the tile in the same facing
+         std::vector<tile::edge_t> temp;
+         for(auto e : edge_list)
+         {
+            if(t.has_front(e))
+               temp.push_back(e);
+         }
+         assert(temp.size() == 2);
+         facing f1 = t.edge(temp.front());
+         facing f2 = t.edge(temp.back());
+         if((f1 < f2) && ((f2 != west) && (f1 != north)))
+            t.make_west(temp.front());
+         else
+            t.make_west(temp.back());
+         rv.push_back(t);
+      }
+   }
+   assert(corners.size() == 4);
+   return rv;
+}
+
+
+tile::list_t find_border(const tile::list_t& tile_list)  // return all borders with the edge to the west
+{
+   tile::list_t rv;
+
+   std::map<tile::edge_t,std::vector<unsigned>> counts;
+   for(const auto& t : tile_list)
+   {
+      auto edge_list = t.unique_edges();
+      for(auto edge : edge_list)
+         counts[edge].push_back(t.number());
+   }
+
+   std::map<unsigned,std::vector<tile::edge_t>> tiles_edges;
+   for(const auto& [edge,list] : counts)
+   {
+      if(list.size() == 1)
+      {
+         //std::cout << "Tile " << list.front() << " edge " << edge << "\n";
+         tiles_edges[list.front()].push_back(edge);
+      }
+   }
+
+   for(const auto& [tile_number,edge_list] : tiles_edges)
+   {
+      if(edge_list.size() == 2) // it's an edge!!!
+      {
+         tile search(tile_number);
+         auto t = *std::lower_bound(tile_list.begin(), tile_list.end(), search);
+         t.make_west(edge_list.front());
+         rv.push_back(t);
       }
    }
    return rv;
 }
 
 
+inline void remove(tile::list_t& list, const tile& t)
+{
+   auto i = std::lower_bound(list.begin(),list.end(),t);
+   list.erase(i);
+}
+
+
+void build_mosaic(tile::list_t list)
+{
+   size_t sz = static_cast<size_t>(sqrt(list.size()));
+
+   // populate the empty mosaic
+   tile::mosaic_t mosaic;
+   for(size_t i = 0; i < sz; ++i)
+      mosaic.emplace_back(std::vector<tile>(sz));
+
+   // get all the border
+   tile::list_t corners = find_corners(list);
+   tile::list_t border = find_border(list);
+
+   // remove the corners and border from the list
+   for(auto& a : corners)
+      remove(list,a);
+   for(auto& a : border)
+      remove(list,a);
+
+   // select a single corner and put it in the nw corner of the mosaic removing it from the corner list
+   mosaic[0][0] = corners.back();
+   corners.pop_back();
+
+   // fill the north border
+   for(size_t c=1; c < sz-1; ++c) // c is for column
+   {
+      const tile& left = mosaic[0][c-1];
+      tile::edge_t search_edge = left.redge(east);
+      auto i = std::find_if(border.begin(), border.end(), [search_edge](const tile& t){ return t.has(search_edge); });
+      i->make_west(search_edge);
+      mosaic[0][c] = *i;
+      border.erase(i);
+   }
+   dump(mosaic);
+
+
+}
+
+
 //----------------------------------------------------------------
-
-
 
 int main(int,char**)
 {
@@ -372,26 +507,7 @@ int main(int,char**)
 
    std::cout << tile_list.size() << "\n";
 
-   tile::list_t corners = find_corners(tile_list);
-   if(corners.size() != 4)
-   {
-      std::cerr << "Bad corner count: " << corners.size() << "\n";
-      return -1;
-   }
-
-   uint64_t product = 1;
-   for(const auto& a : corners)
-      product *= a.number();
-   std::cout << product << "\n";
-
-
-   std::cout << "testing \n";
-   tile t = corners[0];
-   tile::bits_t e = t.redge(west);
-   t.dump();
-   t.make_west(e);
-   t.dump();
-
+   build_mosaic(tile_list);
 
 
    auto time_end = std::chrono::high_resolution_clock::now();
