@@ -25,7 +25,7 @@ public:
    using map_t = std::map<unsigned,tile>;
    using bits_t = uint16_t;
 
-   tile() : m_data{0}, m_edges1{0}, m_edges2{0} {}
+   tile() : m_number{0}, m_data{0}, m_edges1{0}, m_edges2{0} {}
 
    // tile number
    unsigned number() const { return m_number; }
