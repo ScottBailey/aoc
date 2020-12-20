@@ -33,6 +33,11 @@ public:
    unsigned number() const { return m_number; }
 
 
+   void make_west(const bits_t& w);
+
+   bits_t edge(facing f) const { return m_edges1[f]; }
+   bits_t redge(facing f) const { return m_edges2[f]; }
+
 
    bool load(std::istream& is=std::cin);
    void dump() const;
@@ -44,6 +49,13 @@ public:
    bool operator<(const tile& rhs) const {return m_number < rhs.m_number; }
 
 private:
+
+   void flip_l2r();   // flip left to right
+   void flip_t2b();   // flip top tobottom
+   void rotate();     // rotate 90 degree clockwise
+
+   void make_edges();  // populate m_edges1 and m_edges2 from m_data
+
    static bits_t reverse(const bits_t& n);
    static bool get(const bits_t& b, size_t n);
    static void set(bits_t& b, size_t n, bool val);
@@ -58,18 +70,101 @@ private:
 };
 
 
+
+void tile::flip_t2b()
+{
+   std::swap(m_data[0],m_data[9]);
+   std::swap(m_data[1],m_data[8]);
+   std::swap(m_data[2],m_data[7]);
+   std::swap(m_data[3],m_data[6]);
+   std::swap(m_data[4],m_data[5]);
+}
+
+void tile::flip_l2r()
+{
+   for(size_t i = 0; i < m_data.size(); ++i)
+      m_data[i] = reverse(m_data[i]);
+}
+
+
+void tile::rotate()
+{
+   std::array<bits_t,10> orig{m_data};
+
+   for(size_t i = 0; i < 10; ++i) // these are, essentially, the columns when rotate 90 deg clockwise (col = 9-i)
+   {
+      size_t column = 9-i; // cloumnin new orientation
+      for(size_t j = 0; j < 10; ++j) // row in new orientation
+         set(m_data[j], column, get(orig[i],j));
+   }
+
+}
+
+
+
+void tile::make_west(const bits_t& w)
+{
+   // already there?
+   if(w ==  m_edges1[west])
+      return;
+
+   if(w == m_edges1[north])
+   {
+      rotate();
+      flip_t2b();
+      flip_l2r();
+   }
+   else if(w == m_edges1[east])
+   {
+      flip_t2b();
+      flip_l2r();
+   }
+   else if(w == m_edges1[south])
+   {
+      rotate();
+   }
+
+   else if(w ==  m_edges2[west])
+   {
+      flip_t2b();
+   }
+   else if(w == m_edges2[north])
+   {
+      rotate();
+      flip_l2r();
+   }
+   else if(w == m_edges2[east])
+   {
+      flip_l2r();
+   }
+   else if(w == m_edges2[south])
+   {
+      rotate();
+      flip_t2b();
+   }
+   else
+   {
+      std::cerr << "Tile " << m_number << " does not contain edge " << w << "\n";
+      exit(-1);
+   }
+
+   make_edges();
+}
+
 void tile::dump() const
 {
    std::cout << "Tile " << m_number << ":\n";
    for(const auto& a : m_data)
       std::cout << str2(a) << '\n';
    std::cout << '\n';
+   /*
    for(const auto& a : m_edges1)
       std::cout << str1(a) << '\n';
    std::cout << '\n';
    for(const auto& a : m_edges2)
       std::cout << str1(a) << '\n';
    std::cout << '\n';
+   */
 }
 
 bool tile::get(const bits_t& b, size_t n)
@@ -156,6 +251,14 @@ bool tile::load(std::istream& is)
    }
    is.get(ch); // trailing EOL
 
+   make_edges();
+
+   return true;
+}
+
+
+void tile::make_edges()
+{
    // north
    m_edges1[north] = m_data[0];
    m_edges2[north] = reverse(m_data[0]);
@@ -170,8 +273,6 @@ bool tile::load(std::istream& is)
    for(size_t i=0; i < 10; ++i)
       set( m_edges2[west], i, get(m_data[i],0) );
    m_edges1[west] = reverse(m_edges2[west]);
-
-   return true;
 }
 
 
@@ -269,6 +370,8 @@ int main(int,char**)
    tile::list_t tile_list = load();
    //dump(tile_list);
 
+   std::cout << tile_list.size() << "\n";
+
    tile::list_t corners = find_corners(tile_list);
    if(corners.size() != 4)
    {
@@ -281,6 +384,13 @@ int main(int,char**)
       product *= a.number();
    std::cout << product << "\n";
 
+
+   std::cout << "testing \n";
+   tile t = corners[0];
+   tile::bits_t e = t.redge(west);
+   t.dump();
+   t.make_west(e);
+   t.dump();
 
 
 
