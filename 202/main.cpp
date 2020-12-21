@@ -670,6 +670,145 @@ std::vector<std::vector<bool>> build_image(const tile::mosaic_t& m)
    return rv;
 }
 
+
+
+size_t count(const std::vector<std::vector<bool>>& img)
+{
+   //            11111111111
+   //   01234567890123456789
+   //
+   // 0                   #  2
+   // 1 #    ##    ##    ### 1
+   // 2  #  #  #  #  #  #    0
+   //
+   //   98765432109876543210
+   //   1111111111
+
+   size_t right_normal{0};
+   size_t right_inverted{0};
+   size_t left_normal{0};
+   size_t left_inverted{0};
+   size_t down_normal{0};
+   size_t down_inverted{0};
+   size_t up_normal{0};
+   size_t up_inverted{0};
+
+   for(size_t r=0; r < img.size(); ++r)
+   {
+      for(size_t c=0; c < img.size(); ++c)
+      {
+         size_t remain_r = img.size() - r;
+         size_t remain_c = img.size() - c;
+
+         // right left
+         if((remain_c >= 20) && (remain_r >= 3))
+         {
+            // center line - right
+            if( img[r+1][c]
+                  && img[r+1][c+5] && img[r+1][c+6]
+                  && img[r+1][c+11] && img[r+1][c+12]
+                  && img[r+1][c+17] && img[r+1][c+18] && img[r+1][c+19] )
+            {
+               // top and bottom - normal
+               if(img[r][c+18]
+                     && img[r+2][c+1] && img[r+2][c+4] && img[r+2][c+7] && img[r+2][c+10] && img[r+2][c+13] && img[r+2][c+16])
+               {
+                  ++right_normal;
+               }
+
+               // top and bottom - inverted
+               if(img[r+2][c+18]
+                     && img[r][c+1] && img[r][c+4] && img[r][c+7] && img[r][c+10] && img[r][c+13] && img[r][c+16])
+               {
+                  ++right_inverted;
+               }
+
+            }
+            // center line - left
+            if( img[r+1][c] && img[r+1][c+1] && img[r+1][c+2]
+                  && img[r+1][c+7] && img[r+1][c+8]
+                  && img[r+1][c+13] && img[r+1][c+14]
+                  && img[r+1][c+19] )
+            {
+               // top and bottom - normal
+               if(img[r][c+1]
+                     && img[r+2][c+3] && img[r+2][c+6] && img[r+2][c+9] && img[r+2][c+12] && img[r+2][c+15] && img[r+2][c+18])
+               {
+                  ++left_normal;
+               }
+               // top and bottom - inverted
+               if(img[r+2][c+1]
+                     && img[r][c+3] && img[r][c+6] && img[r][c+9] && img[r][c+12] && img[r][c+15] && img[r][c+18])
+               {
+                  ++left_inverted;
+               }
+
+            }
+         }
+
+         // up down
+         if((remain_c >= 3) && (remain_r >= 20))
+         {
+            // center line - down
+            if( img[r][c+1]
+                  && img[r+5][c+1] && img[r+6][c+1]
+                  && img[r+11][c+1] && img[r+12][c+1]
+                  && img[r+17][c+1] && img[r+18][c+1] && img[r+19][c+1] )
+            {
+
+               // top and bottom - normal
+               if(img[r+18][c]
+                     && img[r+1][c+2] && img[r+4][c+2] && img[r+7][c+2] && img[r+10][c+2] && img[r+13][c+2] && img[r+16][c+2])
+               {
+                  ++down_normal;
+               }
+               // top and bottom - inverted
+               if(img[r+18][c+2]
+                     && img[r+1][c] && img[r+4][c] && img[r+7][c] && img[r+10][c] && img[r+13][c] && img[r+16][c])
+               {
+                  ++down_inverted;
+               }
+
+            }
+
+            // center line - up
+            if( img[r][c+1] && img[r+1][c+1] && img[r+2][c+1]
+                  && img[r+7][c+1] && img[r+8][c+1]
+                  && img[r+13][c+1] && img[r+14][c+1]
+                  && img[r+19][c+1] )
+            {
+               // top and bottom - normal
+               if(img[r+1][c]
+                     && img[r+3][c+2] && img[r+6][c+2] && img[r+9][c+2] && img[r+12][c+2] && img[r+15][c+2] && img[r+18][c+2])
+               {
+                  ++up_normal;
+               }
+               // top and bottom - inverted
+               if(img[r+1][c+2]
+                     && img[r+3][c] && img[r+6][c] && img[r+9][c] && img[r+12][c] && img[r+15][c] && img[r+18][c])
+               {
+                  ++up_inverted;
+               }
+
+            }
+         }
+      }
+   }
+
+   std::cout
+      << "right_normal " << right_normal << "\n"
+      << "right_inverted " << right_inverted << "\n"
+      << "left_normal " << left_normal << "\n"
+      << "left_inverted " << left_inverted << "\n"
+      << "down_normal " << down_normal << "\n"
+      << "down_inverted " << down_inverted << "\n"
+      << "up_normal " << up_normal << "\n"
+      << "up_inverted " << up_inverted << "\n"
+      ;
+   return 0;
+}
+
+
 void dump(const std::vector<std::vector<bool>>& img)
 {
    for(const auto& r : img)
@@ -679,6 +818,9 @@ void dump(const std::vector<std::vector<bool>>& img)
       std::cout << "\n";
    }
 }
+
+
+
 
 
 //----------------------------------------------------------------
@@ -692,7 +834,8 @@ int main(int,char**)
 
    tile::mosaic_t tile_mosaic = build_mosaic(tile_list);
    auto img = build_image(tile_mosaic);
-   dump(img);
+   count(img);
+
 
    auto time_end = std::chrono::high_resolution_clock::now();
    std::cout << "\ntime: " << std::chrono::duration_cast<std::chrono::microseconds>(time_end-time_start).count() << " us" << std::endl;
