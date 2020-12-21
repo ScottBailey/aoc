@@ -7,7 +7,7 @@
 #include <bitset>
 #include <map>
 #include <assert.h>
-#include<math.h>
+#include <math.h>
 
 //const bool debug=false;
 
@@ -671,6 +671,12 @@ std::vector<std::vector<bool>> build_image(const tile::mosaic_t& m)
 }
 
 
+inline void max_a(size_t& l, const size_t& r)
+{
+   if(l < r)
+      l = r;
+}
+
 
 size_t count(const std::vector<std::vector<bool>>& img)
 {
@@ -795,17 +801,31 @@ size_t count(const std::vector<std::vector<bool>>& img)
       }
    }
 
-   std::cout
-      << "right_normal " << right_normal << "\n"
-      << "right_inverted " << right_inverted << "\n"
-      << "left_normal " << left_normal << "\n"
-      << "left_inverted " << left_inverted << "\n"
-      << "down_normal " << down_normal << "\n"
-      << "down_inverted " << down_inverted << "\n"
-      << "up_normal " << up_normal << "\n"
-      << "up_inverted " << up_inverted << "\n"
-      ;
-   return 0;
+
+   if(0)
+   {
+      std::cout
+         << "right_normal " << right_normal << "\n"
+         << "right_inverted " << right_inverted << "\n"
+         << "left_normal " << left_normal << "\n"
+         << "left_inverted " << left_inverted << "\n"
+         << "down_normal " << down_normal << "\n"
+         << "down_inverted " << down_inverted << "\n"
+         << "up_normal " << up_normal << "\n"
+         << "up_inverted " << up_inverted << "\n"
+         ;
+   }
+
+   size_t sum = 0;
+   max_a(sum,right_normal);
+   max_a(sum,right_inverted);
+   max_a(sum,left_normal);
+   max_a(sum,left_inverted);
+   max_a(sum,down_normal);
+   max_a(sum,down_inverted);
+   max_a(sum,up_normal);
+   max_a(sum,up_inverted);
+   return sum;
 }
 
 
@@ -834,8 +854,17 @@ int main(int,char**)
 
    tile::mosaic_t tile_mosaic = build_mosaic(tile_list);
    auto img = build_image(tile_mosaic);
-   count(img);
+   size_t sum = count(img);
 
+   size_t waves = 0;
+   // std::vector<std::vector<bool>>& img
+   for(const auto& r : img)
+   {
+      for(const auto& c : r)
+         waves += c;
+   }
+   waves -= (sum * 15);
+   std::cout << waves << "\n";
 
    auto time_end = std::chrono::high_resolution_clock::now();
    std::cout << "\ntime: " << std::chrono::duration_cast<std::chrono::microseconds>(time_end-time_start).count() << " us" << std::endl;
