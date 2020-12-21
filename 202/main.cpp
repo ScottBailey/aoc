@@ -64,6 +64,8 @@ public:
    void border(edge_t e1) { m_border.clear(); m_border.push_back(e1); }
    void border(edge_t e1, edge_t e2) { m_border.clear(); m_border.push_back(e1); m_border.push_back(e2); }
 
+   bool value(size_t r, size_t y) const;  // get the row column value of the internal image, r < c, c < 8; borders ignored
+
    bool operator==(const tile& rhs) const {return m_number == rhs.m_number; }
    bool operator<(const tile& rhs) const {return m_number < rhs.m_number; }
 
@@ -89,6 +91,14 @@ private:
 
    std::vector<edge_t> m_border; // debugging tool
 };
+
+
+bool tile::value(size_t r, size_t c) const
+{
+   edge_t n = m_data[r+1];
+   n >>= (c+1);
+   return n&1;
+}
 
 
 facing tile::edge(const edge_t& b) const
@@ -509,7 +519,7 @@ void validate_mosaic(const tile::mosaic_t& m)
 }
 
 
-void build_mosaic(tile::list_t list)
+tile::mosaic_t build_mosaic(tile::list_t list)
 {
    size_t sz = static_cast<size_t>(sqrt(list.size()));
 
@@ -632,7 +642,42 @@ void build_mosaic(tile::list_t list)
       }
    }
 
-   validate_mosaic(mosaic);
+   //validate_mosaic(mosaic);
+
+   return mosaic;
+}
+
+
+std::vector<std::vector<bool>> build_image(const tile::mosaic_t& m)
+{
+   std::vector<std::vector<bool>> rv;
+   for(size_t i= 0; i < m.size()*8; ++i)
+      rv.emplace_back( std::vector<bool>(m.size()*8, false) );
+
+   for(size_t i=0; i < m.size(); ++i)
+   {
+      for(size_t j=0; j < m.size(); ++j)
+      {
+         const tile& t = m[i][j];
+         for(size_t r=0; r < 8; ++r)
+         {
+            for(size_t c=0; c < 8; ++c)
+               rv[i*8+r][j*8+c] = t.value(r,c);
+         }
+      }
+   }
+
+   return rv;
+}
+
+void dump(const std::vector<std::vector<bool>>& img)
+{
+   for(const auto& r : img)
+   {
+      for(const auto& c : r)
+         std::cout << (c ? "#" : ".");
+      std::cout << "\n";
+   }
 }
 
 
@@ -645,10 +690,9 @@ int main(int,char**)
    tile::list_t tile_list = load();
    //dump(tile_list);
 
-   std::cout << tile_list.size() << "\n";
-
-   build_mosaic(tile_list);
-
+   tile::mosaic_t tile_mosaic = build_mosaic(tile_list);
+   auto img = build_image(tile_mosaic);
+   dump(img);
 
    auto time_end = std::chrono::high_resolution_clock::now();
    std::cout << "\ntime: " << std::chrono::duration_cast<std::chrono::microseconds>(time_end-time_start).count() << " us" << std::endl;
