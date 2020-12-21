@@ -41,9 +41,10 @@ public:
 
    // tile number
    unsigned number() const { return m_number; }
-
+   bool valid() const { return m_number > 0; }
 
    void make_west(const edge_t& w);
+   void make_north(const edge_t& w);
 
    edge_t edge(facing f) const { return m_edges1[f]; }
    edge_t redge(facing f) const { return m_edges2[f]; }
@@ -58,6 +59,10 @@ public:
 
    // all unique edges, forward and reverse
    std::vector<edge_t> unique_edges() const;
+
+
+   void border(edge_t e1) { m_border.clear(); m_border.push_back(e1); }
+   void border(edge_t e1, edge_t e2) { m_border.clear(); m_border.push_back(e1); m_border.push_back(e2); }
 
    bool operator==(const tile& rhs) const {return m_number == rhs.m_number; }
    bool operator<(const tile& rhs) const {return m_number < rhs.m_number; }
@@ -81,6 +86,8 @@ private:
 
    std::array<edge_t,facing::size> m_edges1;
    std::array<edge_t,facing::size> m_edges2;
+
+   std::vector<edge_t> m_border; // debugging tool
 };
 
 
@@ -171,11 +178,22 @@ void tile::make_west(const edge_t& w)
    else
    {
       std::cerr << "Tile " << m_number << " does not contain edge " << w << "\n";
+      throw -1;
       exit(-1);
    }
 
    make_edges();
 }
+
+
+void tile::make_north(const edge_t& n)
+{
+   // this is atemporary, but bad hack
+   make_west(n);
+   rotate();
+   make_edges();
+}
+
 
 void tile::dump() const
 {
@@ -341,7 +359,7 @@ void dump(const tile::mosaic_t& mosaic)
    {
       for(const auto& t : r)
          t.dump();
-      std::cout << "\n";
+      std::cout << "\n\n";
    }
 }
 
@@ -402,14 +420,20 @@ tile::list_t find_corners(const tile::list_t& tile_list)
          assert(temp.size() == 2);
          facing f1 = t.edge(temp.front());
          facing f2 = t.edge(temp.back());
-         if((f1 < f2) && ((f2 != west) && (f1 != north)))
+         if((f1 < f2) && !((f2 == west) && (f1 == north)))
+         {
             t.make_west(temp.front());
+            t.border(temp.front(),temp.back());
+         }
          else
+         {
             t.make_west(temp.back());
+            t.border(temp.back(),temp.front());
+         }
          rv.push_back(t);
       }
    }
-   assert(corners.size() == 4);
+   assert(rv.size() == 4);
    return rv;
 }
 
@@ -443,6 +467,7 @@ tile::list_t find_border(const tile::list_t& tile_list)  // return all borders w
          tile search(tile_number);
          auto t = *std::lower_bound(tile_list.begin(), tile_list.end(), search);
          t.make_west(edge_list.front());
+         t.border(edge_list.front());
          rv.push_back(t);
       }
    }
@@ -454,6 +479,33 @@ inline void remove(tile::list_t& list, const tile& t)
 {
    auto i = std::lower_bound(list.begin(),list.end(),t);
    list.erase(i);
+}
+
+
+void validate_mosaic(const tile::mosaic_t& m)
+{
+   for(size_t r=0; r < m.size(); ++r)
+   {
+      for(size_t c=0; c < m.size(); ++c)
+      {
+         if(!m[r][c].valid())
+         {
+            std::cerr << "invalid " << r << "," << c << "\n";
+            throw -1;
+         }
+
+         if(c+1 < m.size() && m[r][c].edge(east) != m[r][c+1].redge(west))
+         {
+            std::cerr << "mismatch right " << r << "," << c << "\n";
+            throw -1;
+         }
+         if(r+1 < m.size() && m[r][c].edge(south) != m[r+1][c].redge(north))
+         {
+            std::cerr << "mismatch below " << r << "," << c << "\n";
+            throw -1;
+         }
+      }
+   }
 }
 
 
@@ -483,16 +535,104 @@ void build_mosaic(tile::list_t list)
    // fill the north border
    for(size_t c=1; c < sz-1; ++c) // c is for column
    {
-      const tile& left = mosaic[0][c-1];
-      tile::edge_t search_edge = left.redge(east);
-      auto i = std::find_if(border.begin(), border.end(), [search_edge](const tile& t){ return t.has(search_edge); });
+      tile::edge_t search_edge = mosaic[0][c-1].redge(east);
+      auto i = std::find_if(border.begin(), border.end(),
+            [search_edge](const tile& t){return t.edge(south) == search_edge || t.redge(north) == search_edge;} );
+
+      if(i == border.end())
+      {
+         i = std::find_if(border.begin(), border.end(),
+               [search_edge](const tile& t){return t.has(search_edge); } );
+         throw -1;
+      }
+
       i->make_west(search_edge);
       mosaic[0][c] = *i;
       border.erase(i);
    }
-   dump(mosaic);
+
+   // populate the north west corner
+   {
+      tile::edge_t search_edge = mosaic[0][sz-2].redge(east);
+      auto i = std::find_if(corners.begin(), corners.end(), [search_edge](const tile& t){ return t.has(search_edge); });
+      i->make_west(search_edge);
+      mosaic[0][sz-1] = *i;
+      corners.erase(i);
+   }
+
+   // now populate the western border
+   for(size_t r=1; r < sz-1; ++r) // r is for row
+   {
+      tile::edge_t search_edge = mosaic[r-1][0].redge(south);
+      auto i = std::find_if(border.begin(), border.end(),
+            [search_edge](const tile& t){return t.edge(north) == search_edge || t.redge(south) == search_edge;} );
+      i->make_north(search_edge);
+      mosaic[r][0] = *i;
+      border.erase(i);
+   }
+
+   // now populate the eastern border
+   for(size_t r=1; r < sz-1; ++r) // r is for row
+   {
+      tile::edge_t search_edge = mosaic[r-1][sz-1].redge(south);
+      auto i = std::find_if(border.begin(), border.end(),
+            [search_edge](const tile& t){return t.edge(south) == search_edge || t.redge(north) == search_edge;} );
+      i->make_north(search_edge);
+      mosaic[r][sz-1] = *i;
+      border.erase(i);
+   }
+
+   // populate the south west corner
+   {
+      tile::edge_t search_edge = mosaic[sz-2][0].redge(south);
+      auto i = std::find_if(corners.begin(), corners.end(), [search_edge](const tile& t){ return t.has(search_edge); });
+      i->make_north(search_edge);
+      mosaic[sz-1][0] = *i;
+      corners.erase(i);
+   }
+
+   // populate the south east corner
+   {
+      tile::edge_t search_edge = mosaic[sz-2][sz-1].redge(south); // although there is only one, it still needs to be rotated
+      corners.front().make_north(search_edge);
+      mosaic[sz-1][sz-1] = corners.front();
+      corners.clear(); // there's only the one...
+   }
+
+   // populate the south border
+   for(size_t c=1; c < sz-1; ++c) // c is for column
+   {
+      tile::edge_t search_edge = mosaic[sz-1][c-1].redge(east);
+      auto i = std::find_if(border.begin(), border.end(),
+            [search_edge](const tile& t){return t.edge(north) == search_edge || t.redge(south) == search_edge;} );
+      i->make_west(search_edge);
+      mosaic[sz-1][c] = *i;
+      border.erase(i);
+   }
 
 
+   // populate the inside!
+   for(size_t r=1; r+1 < mosaic.size(); ++r)
+   {
+      for(size_t c=1; c+1 < mosaic.size(); ++c)
+      {
+         tile::edge_t search_above = mosaic[r-1][c].redge(south);
+         tile::edge_t search_left = mosaic[r][c-1].redge(east);
+         // this doesnt test the values are in the right places... might be an issue later.
+         auto i = std::find_if(list.begin(), list.end(),
+               [search_above,search_left](const tile& t) { return t.has(search_above) && t.has(search_left); } );
+         if(i == list.end())
+         {
+             std::cerr << "failed to find tile for: " << r << "," << c << "\n";
+             throw -1;
+         }
+         i->make_west(search_left);
+         mosaic[r][c] = *i;
+         list.erase(i);
+      }
+   }
+
+   validate_mosaic(mosaic);
 }
 
 
