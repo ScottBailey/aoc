@@ -152,9 +152,7 @@ std::pair<bool,list_t> play2(list_t::iterator lb, list_t::iterator le, list_t::i
       ++rb;
    }
 
-   std::vector<size_t> hashes_left;
-   std::vector<size_t> hashes_right;
-
+   std::vector<size_t> hashes;
    for(;;)
    {
       if(r.empty())
@@ -206,19 +204,13 @@ std::pair<bool,list_t> play2(list_t::iterator lb, list_t::iterator le, list_t::i
          size_t temp = 0;
          for(auto a : l) // we must hash it ourselves as hash_value doesn't support circular buffer
             boost::hash_combine(temp,a);
-         auto a = std::lower_bound(hashes_left.begin(),hashes_left.end(),temp);
-         if(a != hashes_left.end() && *a == temp)
-            return std::make_pair(true,l);
-         hashes_left.insert(a,temp);
-      }
-      {
-         size_t temp = 0;
+         boost::hash_combine(temp,99); // use 99 as a deck separator
          for(auto a : r) // we must hash it ourselves as hash_value doesn't support circular buffer
             boost::hash_combine(temp,a);
-         auto a = std::lower_bound(hashes_right.begin(),hashes_right.end(),temp);
-         if(a != hashes_right.end() && *a == temp)
+         auto a = std::lower_bound(hashes.begin(),hashes.end(),temp);
+         if(a != hashes.end() && *a == temp)
             return std::make_pair(true,l);
-         hashes_right.insert(a,temp);
+         hashes.insert(a,temp);
       }
 
 
