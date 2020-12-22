@@ -4,21 +4,31 @@
 #include <stdint.h>
 #include <aoc/get.h>            // aoc::get_line()
 #include <sb/string.h>          // sb::string::parse(), sb::string::from()
-#include <deque>
-#include <vector>
+
+//#define sb_use_deque
+//#define sb_use_vector
+#define sb_use_circular_buffer
+
+#if defined(sb_use_deque)
+# include <deque>
+using list_t = std::deque<unsigned>;
+#endif
+
+#if defined(sb_use_vector)
+# include <vector>
+using list_t = std::vector<unsigned>;
+#endif
+
+#if defined(sb_use_circular_buffer)
+#include <boost/circular_buffer.hpp>
+using list_t = boost::circular_buffer<unsigned>;
+#endif
+
 #include <boost/container_hash/hash.hpp>
 
 const bool debug=false;
 
-#define sb_use_deque
-// #define sb_use_vector
 
-#if defined(sb_use_deque)
-using list_t = std::deque<unsigned>;
-#endif
-#if defined(sb_use_vector)
-using list_t = std::vector<unsigned>;
-#endif
 
 list_t load(std::istream& is=std::cin)
 {
@@ -30,7 +40,13 @@ list_t load(std::istream& is=std::cin)
    {
       unsigned val;
       if(sb::string::from(temp,val))
+      {
+#if defined(sb_use_circular_buffer)
+         if(rv.capacity() < (rv.size()+1))
+            rv.set_capacity(rv.capacity()+10);
+#endif
          rv.insert(rv.begin(),val); // rv.push_front()
+      }
    }
 
    return rv;
@@ -47,6 +63,11 @@ std::pair<bool,list_t> play1(list_t::iterator lb, list_t::iterator le, list_t::i
    size_t max = std::distance(lb,le) + std::distance(rb,re);
    l.reserve(max);
    r.reserve(max);
+#endif
+#if defined(sb_use_circular_buffer)
+   size_t max = std::distance(lb,le) + std::distance(rb,re);
+   l.set_capacity(max);
+   r.set_capacity(max);
 #endif
 
    while(lb < le)
@@ -114,6 +135,12 @@ std::pair<bool,list_t> play2(list_t::iterator lb, list_t::iterator le, list_t::i
    r.reserve(max);
 #endif
 
+#if defined(sb_use_circular_buffer)
+   size_t max = std::distance(lb,le) + std::distance(rb,re);
+   l.set_capacity(max);
+   r.set_capacity(max);
+#endif
+
    while(lb < le)
    {
       l.push_back(*lb);
@@ -176,14 +203,18 @@ std::pair<bool,list_t> play2(list_t::iterator lb, list_t::iterator le, list_t::i
 
       // deal with hashes here
       {
-         size_t temp = boost::hash_value(l);
+         size_t temp = 0;
+         for(auto a : l) // we must hash it ourselves as hash_value doesn't support circular buffer
+            boost::hash_combine(temp,a);
          auto a = std::lower_bound(hashes_left.begin(),hashes_left.end(),temp);
          if(a != hashes_left.end() && *a == temp)
             return std::make_pair(true,l);
          hashes_left.insert(a,temp);
       }
       {
-         size_t temp = boost::hash_value(r);
+         size_t temp = 0;
+         for(auto a : r) // we must hash it ourselves as hash_value doesn't support circular buffer
+            boost::hash_combine(temp,a);
          auto a = std::lower_bound(hashes_right.begin(),hashes_right.end(),temp);
          if(a != hashes_right.end() && *a == temp)
             return std::make_pair(true,l);

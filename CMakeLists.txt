@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 
 project("aoc-2020")
 
-
+find_package(boost CONFIG)
 
 #
 # Function for each individual project
