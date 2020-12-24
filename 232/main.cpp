@@ -4,14 +4,12 @@
 #include <stdint.h>
 #include <aoc/get.h>            // aoc::get_line()
 #include <sb/string.h>          // sb::string::parse(), sb::string::from()
-#include <vector>
 #include <array>
-#include <cassert>
-#include <map>
+#include <memory>
 //const bool debug=false;
 
-constexpr size_t max{10}; // zero is a dummy, so add 1
-//constexpr size_t max{1'000'001}; // zero is a dummy, so add 1
+//constexpr size_t max{10}; // zero is a dummy, so add 1
+constexpr size_t max{1'000'001}; // zero is a dummy, so add 1
 
 template<typename T>
 struct node_type
@@ -23,6 +21,7 @@ struct node_type
 
 using node_t = node_type<unsigned>;
 using list_t = std::array<node_t,max>; // the zero-ith value is a dummy and will point to the firost valid
+using list_ptr_t = std::unique_ptr<list_t>;
 
 
 // cut the 3 nodes after node i
@@ -63,12 +62,13 @@ bool has3(node_t* n1, unsigned i)
 }
 
 
-list_t load(std::istream& is=std::cin)
+list_ptr_t load(std::istream& is=std::cin)
 {
-   list_t rv;
+   list_ptr_t rv = std::make_unique<list_t>();
+   list_t& list = *rv;
 
    // zero is a dummy
-   node_t* last=&(rv[0]);
+   node_t* last=&(list[0]);
    last->left = nullptr;
    last->val = 0;
 
@@ -80,7 +80,7 @@ list_t load(std::istream& is=std::cin)
       if( val > 9 )
          break;
 
-      node_t* curr = &(rv[val]);
+      node_t* curr = &(list[val]);
 
       // update last
       last->right = curr;
@@ -94,7 +94,7 @@ list_t load(std::istream& is=std::cin)
       ++i;
    }
 
-   node_t* curr = &(rv[i]);
+   node_t* curr = &(list[i]);
    while(i < max)
    {
       // update last
@@ -110,8 +110,10 @@ list_t load(std::istream& is=std::cin)
       ++i;
    }
 
-   last->right = rv[0].right; // update the first member of the list
-   rv[0].right->left = last;  // update the last member of the list
+   last->right = list[0].right; // update the first member of the list
+   list[0].right->left = last;  // update the last member of the list
+
+   std::cout << "loaded" << std::endl;
 
    return rv;
 }
@@ -193,8 +195,8 @@ inline void dump1(const list_t& v)
 
 inline void dump2(const list_t& v)
 {
-   unsigned a = v[1].right->val;
-   unsigned b = v[1].right->right->val;
+   uint64_t a = v[1].right->val;
+   uint64_t b = v[1].right->right->val;
    std::cout << a << " x " << b << " = " << a*b << "\n";
 }
 
@@ -237,10 +239,9 @@ int main(int,char**)
 {
    auto time_start = std::chrono::high_resolution_clock::now();
 
-   list_t v = load();
-   move(v,100);
-   dump1(v);
-
+   list_ptr_t v = load();
+   move(*v,10'000'000);
+   dump2(*v);
 
 
    auto time_end = std::chrono::high_resolution_clock::now();
