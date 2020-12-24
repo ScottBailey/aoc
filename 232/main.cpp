@@ -212,9 +212,9 @@ inline void move(list_t& v, size_t iterations)
    node_t* start = v[0].right;
    for(size_t i=0; i < iterations; ++i)
    {
-      v[0].right = start;
-      std::cout << i+1 << ": ";
-      dump(v);
+      //v[0].right = start;
+      //std::cout << i+1 << ": ";
+      //dump(v);
 
       node_t* splice = cut3(start);
       unsigned insert_pos = start->val;
@@ -238,7 +238,7 @@ int main(int,char**)
    auto time_start = std::chrono::high_resolution_clock::now();
 
    list_t v = load();
-   move(v,10);
+   move(v,100);
    dump1(v);
 
 
