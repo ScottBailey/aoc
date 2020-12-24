@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <stdint.h>
 #include <aoc/get.h>            // aoc::get_line()
-#include <sb/string.h>          // sb::string::parse(), sb::string::from()
 #include <vector>
 #include <map>
 
@@ -235,25 +234,12 @@ hex_loc::list_t solve1(const hex_loc::list_t& list)
 }
 
 
-/*
-size_t count_adjacent(const hex_loc::list_t& list, const hex_loc& hl)
-{
-   return
-      std::binary_search(list.begin(),list.end(), hl.east())
-      + std::binary_search(list.begin(),list.end(), hl.south_east())
-      + std::binary_search(list.begin(),list.end(), hl.south_west())
-      + std::binary_search(list.begin(),list.end(), hl.west())
-      + std::binary_search(list.begin(),list.end(), hl.north_west())
-      + std::binary_search(list.begin(),list.end(), hl.north_east())
-      ;
-}
-*/
-
 void flip(hex_loc::list_t& black)
 {
    //std::sort(black.begin(),black.end());
 
    hex_loc::list_t rv;
+   rv.reserve(black.size()*3);
 
    hex_loc::list_t white; // these start as potentially white...
    white.reserve(black.size()*6);
