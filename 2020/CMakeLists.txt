@@ -11,7 +11,7 @@ function(aoc_target target_name)
 
   file(GLOB src_cpp ${target_name}/*.cpp)
   file(GLOB src_h   ${target_name}/*.h)
-  file(GLOB_RECURSE inc_h  include/*.h include/*.ipp)
+  file(GLOB_RECURSE inc_h  ../include/*.h ../include/*.ipp)
 
   message( "trying to add: ${target_name}" )
 
@@ -20,7 +20,7 @@ function(aoc_target target_name)
 
   target_include_directories( ${target_name} PRIVATE
     ${target_name}
-    include
+    ../include
     )
 
   if(${target_name} STREQUAL "132")
