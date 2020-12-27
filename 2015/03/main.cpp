@@ -11,10 +11,24 @@
 
 //const bool debug=false;
 
+struct move
+{
+   long x;
+   long y;
+};
+
+
 struct location
 {
    long x=0;
    long y=0;
+
+   location& operator+=(const move& rhs)
+   {
+      x += rhs.x;
+      y += rhs.y;
+      return *this;
+   }
 
    bool operator<(const location& rhs) {
       if(x < rhs.x)
@@ -28,13 +42,7 @@ struct location
 std::ostream& operator<<(std::ostream& os, const location& l) { os << l.x << "," << l.y; return os; }
 
 
-using list_t = std::vector<location>;
-
-std::ostream& operator<<(std::ostream& os, const list_t& list)
-{
-   sb::ignore(list);
-   return os;
-}
+using list_t = std::vector<move>;
 
 
 list_t load(std::istream& is=std::cin)
@@ -42,18 +50,15 @@ list_t load(std::istream& is=std::cin)
    list_t rv;
    rv.reserve(9000);
 
-   location l;
-   rv.push_back(l);
-
    char ch;
    while(is.get(ch))
    {
       switch(ch)
       {
-         case '^': l.y -= 1; rv.push_back(l); break;
-         case 'v': l.y += 1; rv.push_back(l); break;
-         case '>': l.x += 1; rv.push_back(l); break;
-         case '<': l.x -= 1; rv.push_back(l); break;
+         case '^': rv.emplace_back(move{0,-1}); break;
+         case 'v': rv.emplace_back(move{0,1}); break;
+         case '>': rv.emplace_back(move{1,0}); break;
+         case '<': rv.emplace_back(move{-1,0}); break;
 
          case '\n': break;
 
@@ -66,21 +71,48 @@ list_t load(std::istream& is=std::cin)
 }
 
 
-void part1(const list_t& list_in)
+void part1(const list_t& list)
 {
-   auto list = list_in;
-   std::sort(list.begin(),list.end());
-   list.erase(std::unique(list.begin(),list.end()),list.end());
+   location l;
 
-   int result = list.size();
+   std::vector<location> locs;
+   locs.reserve(list.size()+1);
+   locs.push_back(l);
+
+   for(auto& a : list)
+   {
+      l += a;
+      locs.push_back(l);
+   }
+
+   std::sort(locs.begin(),locs.end());
+   locs.erase(std::unique(locs.begin(),locs.end()),locs.end());
+
+   int result = locs.size();
    std::cout << sb::white << "Part 1: " << sb::reset << result << "\n";
 }
 
 
 void part2(const list_t& list)
 {
-   int result = list.size();
+   std::array<location,2> l;
 
+   std::vector<location> locs;
+   locs.reserve(list.size()+1);
+
+   locs.push_back(l[0]);
+
+   for(size_t i=0; i < list.size(); ++i)
+   {
+      size_t index = i & 1; // 0 or 1
+      l[index] += list[i];
+      locs.push_back(l[index]);
+   }
+
+   std::sort(locs.begin(),locs.end());
+   locs.erase(std::unique(locs.begin(),locs.end()),locs.end());
+
+   int result = locs.size();
    std::cout << sb::white << "Part 2: " << sb::reset << result << "\n";
 }
 
