@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.18)
 project("aoc-2020")
 
 find_package(boost CONFIG)
-
+find_package(OpenSSL)
 #
 # Function for each individual project
 #
@@ -23,9 +23,9 @@ function(aoc_target target_name)
     ../include
     )
 
-  #  if(${target_name} STREQUAL "132")
-  #    target_link_libraries(${target_name} pthread)  # for threads
-  #  endif()
+  if(${target_name} STREQUAL "04")
+    target_link_libraries(${target_name} OpenSSL::Crypto ) # md5sum
+  endif()
 
   file(GLOB src_input ${target_name}/input.txt)
   add_custom_target( test${target_name}
