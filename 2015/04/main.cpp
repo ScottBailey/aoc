@@ -38,9 +38,19 @@ void part1(const std::string& s)
 
 void part2(const std::string& s)
 {
-   int result = s.size();
-
-   std::cout << sb::white << "Part 2: " << sb::reset << result << "\n";
+   unsigned i=0;
+   for(;;)
+   {
+      std::string secret;
+      secret.reserve(16);
+      secret += s;
+      secret += std::to_string(i);
+      sb::md5::hash_t h = sb::md5::sum(secret);
+      if(!h[0] && !h[1] && !h[2])
+         break;
+      ++i;
+   }
+   std::cout << sb::white << "Part 2: " << sb::reset << i << "\n";
 }
 
 
