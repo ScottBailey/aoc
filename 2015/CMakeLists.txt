@@ -23,10 +23,14 @@ function(aoc_target target_name)
     ../include
     )
 
-#  if(${target_name} STREQUAL "132")
-#    target_link_libraries(${target_name} pthread)  # for threads
-#  endif()
+  #  if(${target_name} STREQUAL "132")
+  #    target_link_libraries(${target_name} pthread)  # for threads
+  #  endif()
 
+  file(GLOB src_input ${target_name}/input.txt)
+  add_custom_target( test${target_name}
+    COMMAND ${target_name} < ${src_input}
+    )
 
 endfunction()
 
