@@ -65,6 +65,10 @@ list_t load(std::istream& is=std::cin)
       box[side] = dimension;
       rv.push_back(box);
    }
+
+   for(auto& a : rv)
+      std::sort(a.begin(), a.end());
+
    return rv;
 }
 
@@ -77,8 +81,7 @@ void part1(const list_t& list)
       unsigned s1 = a[0]*a[1];
       unsigned s2 = a[0]*a[2];
       unsigned s3 = a[1]*a[2];
-      unsigned extra = std::min(s1,std::min(s2,s3));
-      result += (2*s1) + (2*s2) + (2*s3) + extra;
+      result += (3*s1) + (2*s2) + (2*s3);
    }
    std::cout << sb::white << "Part 1: " << sb::reset << result << "\n";
 }
@@ -86,7 +89,9 @@ void part1(const list_t& list)
 
 void part2(const list_t& list)
 {
-   int result = list.size();
+   uint64_t result = 0;
+   for(auto& a : list)
+      result += a[0] + a[0] + a[1] + a[1] + (a[0]*a[1]*a[2]);
 
    std::cout << sb::white << "Part 2: " << sb::reset << result << "\n";
 }
