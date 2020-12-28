@@ -34,7 +34,7 @@ struct command
 constexpr size_t max{1000};
 
 using list_t = std::vector<command>;
-using matrix_t = std::vector<std::vector<unsigned>>;
+using matrix_t = std::vector<std::vector<long>>;
 
 std::ostream& operator<<(std::ostream& os, const list_t& list)
 {
@@ -121,11 +121,27 @@ size_t count(const matrix_t& m)
 }
 
 
+
+void add(matrix_t& m, const coord& first, const coord& last, int val)
+{
+   for(size_t x=first.x; x <= last.x; ++x)
+   {
+      for(size_t y=first.y; y <= last.y; ++y)
+      {
+         m[x][y] += val;
+         if(m[x][y] < 0)
+            m[x][y] = 0;
+      }
+   }
+}
+
+
+
 void part1(const list_t& list)
 {
-   std::vector<std::vector<unsigned>> v;
+   matrix_t v;
    for(size_t i = 0; i < max; ++i)
-      v.emplace_back(std::vector<unsigned>(max,0));
+      v.emplace_back(matrix_t::value_type(max,0));
 
    for(const auto& a : list)
    {
@@ -146,9 +162,24 @@ void part1(const list_t& list)
 
 void part2(const list_t& list)
 {
-   int result = list.size();
+   matrix_t v;
+   for(size_t i = 0; i < max; ++i)
+      v.emplace_back(matrix_t::value_type(max,0));
 
-   std::cout << sb::white << "Part 2: " << sb::reset << result << "\n";
+   for(const auto& a : list)
+   {
+      switch(a.action)
+      {
+         case command::off:    add(v, a.p0, a.p1, -1); break;
+         case command::on:     add(v, a.p0, a.p1, 1); break;
+         case command::toggle: add(v, a.p0, a.p1, 2); break;
+         default:
+            throw std::invalid_argument("bad action");
+            break;
+      }
+   }
+
+   std::cout << sb::white << "Part 2: " << sb::reset << count(v) << "\n";
 }
 
 
