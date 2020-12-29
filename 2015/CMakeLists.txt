@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project("aoc-2020")
+project("aoc-2015")
 
 find_package(boost CONFIG)
 find_package(OpenSSL)
