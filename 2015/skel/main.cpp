@@ -11,18 +11,18 @@
 
 //const bool debug=false;
 
-using list_t = std::vector<int>;
+using container_t = std::vector<int>;
 
-std::ostream& operator<<(std::ostream& os, const list_t& list)
+std::ostream& operator<<(std::ostream& os, const container_t& list)
 {
    sb::ignore(list);
    return os;
 }
 
 
-list_t load(std::istream& is=std::cin)
+container_t load(std::istream& is=std::cin)
 {
-   list_t rv;
+   container_t rv;
    char ch;
    while(is.get(ch))
    {
@@ -32,14 +32,14 @@ list_t load(std::istream& is=std::cin)
 }
 
 
-void part1(const list_t& list)
+void part1(const container_t& list)
 {
    int result = list.size();
    std::cout << sb::white << "Part 1: " << sb::reset << result << "\n";
 }
 
 
-void part2(const list_t& list)
+void part2(const container_t& list)
 {
    int result = list.size();
 
@@ -51,7 +51,7 @@ int main(int,char**)
 {
    auto time0 = std::chrono::high_resolution_clock::now();
 
-   list_t list = load();
+   container_t list = load();
 
    auto time1 = std::chrono::high_resolution_clock::now();
 
