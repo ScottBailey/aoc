@@ -202,9 +202,9 @@ void part1(const container_t& list)
 
 void part2(const container_t& list)
 {
-   int result = list.size();
-
-   std::cout << sb::white << "Part 2: " << sb::reset << result << "\n";
+   container_t temp = list;
+   temp["b"].value = 16076;
+   std::cout << sb::white << "Part 2: " << sb::reset << solve_1(temp,"a") << "\n";
 }
 
 
