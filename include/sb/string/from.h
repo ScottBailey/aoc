@@ -14,8 +14,8 @@ namespace string {
 template<typename T>
 bool from(const std::string_view& s, T& t);
 
-//template<typename T>
-//bool from_hex(const std::string_view& s, T& t);
+template<typename T>
+bool from_hex(const std::string_view& s, T& t);
 
 
 } // namespace string
