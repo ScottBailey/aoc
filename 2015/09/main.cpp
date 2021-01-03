@@ -8,6 +8,7 @@
 #include <sb/ignore.h>          // sb::string::parse(), sb::string::from()
 #include <vector>
 #include <numeric>
+#include <thread>
 
 //const bool debug=false;
 
@@ -38,6 +39,9 @@ std::ostream& operator<<(std::ostream& os, const dist_t& d)
 
 using container_t = std::vector<dist_t>;
 using result_t = std::pair<container_t,unsigned>;
+
+bool operator<(const result_t& lhs, const result_t& rhs) { return lhs.second < rhs.second; }
+
 
 std::ostream& operator<<(std::ostream& os, const container_t& list)
 {
@@ -134,6 +138,52 @@ void part1(const container_t& list)
 }
 
 
+void part1_threads(const container_t& list)
+{
+   // get all the possible starting locations
+   std::vector<std::string> locs;
+   for(const auto& a : list)
+   {
+      locs.push_back(a.a);
+      locs.push_back(a.b);
+   }
+   std::sort(locs.begin(),locs.end());
+   locs.erase(std::unique(locs.begin(),locs.end()),locs.end());
+
+
+   // we need a list for return values and we need a list for threads, 1-to-1 with starting locations
+   std::vector<result_t> all(locs.size());
+   std::vector<std::thread> threads;
+   threads.reserve(all.size());
+
+   for(size_t i=0; i < locs.size(); ++i)
+   {
+      threads.emplace_back(
+         [&all,list,locs,i]() {
+            dist_t dummy;
+            dummy.a = "";
+            dummy.b = locs[i];
+            dummy.dist = 0;
+
+            all[i] = route_solve1(list, container_t{}, dummy, 0, std::numeric_limits<unsigned>::max());
+         }
+      );
+   }
+
+   for(auto& a : threads)
+      a.join();
+
+   std::sort(all.begin(),all.end());
+
+   std::cout << list << "\n\n";
+   for(const auto& a : all.front().first)
+      std::cout << " -> " << a.b;
+   std::cout << "\n\n";
+   int result = all.front().second;
+   std::cout << sb::white << "Part 1: " << sb::reset << result << "\n";
+}
+
+
 void part2(const container_t& list)
 {
    int result = list.size();
@@ -152,18 +202,23 @@ int main(int,char**)
 
    part1(list);
 
-   auto time2  = std::chrono::high_resolution_clock::now();
+   auto time2 = std::chrono::high_resolution_clock::now();
+
+   part1_threads(list);
+
+   auto time3  = std::chrono::high_resolution_clock::now();
 
    part2(list);
 
-   auto time3  = std::chrono::high_resolution_clock::now();
+   auto time4  = std::chrono::high_resolution_clock::now();
 
 
    std::cout
       << sb::white
       << "\nload time:  " << std::chrono::duration_cast<std::chrono::microseconds>(time1-time0).count() << " us\n"
       << "part1 time: " << std::chrono::duration_cast<std::chrono::microseconds>(time2-time1).count() << " us\n"
-      << "part2 time: " << std::chrono::duration_cast<std::chrono::microseconds>(time3-time2).count() << " us\n"
+      << "part1 (multi-threaded) time: " << std::chrono::duration_cast<std::chrono::microseconds>(time3-time2).count() << " us\n"
+      << "part2 time: " << std::chrono::duration_cast<std::chrono::microseconds>(time4-time3).count() << " us\n"
       << std::flush
       ;
    return 0;
