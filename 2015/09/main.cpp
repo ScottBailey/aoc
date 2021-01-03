@@ -129,11 +129,13 @@ void part1(const container_t& list)
          best = temp;
    }
 
+   /*
    std::cout << list << "\n\n";
    for(const auto& a : best.first)
       std::cout << " -> " << a.b;
    std::cout << "\n\n";
-   int result = best.second;
+   */
+   unsigned result = best.second;
    std::cout << sb::white << "Part 1: " << sb::reset << result << "\n";
 }
 
@@ -175,18 +177,83 @@ void part1_threads(const container_t& list)
 
    std::sort(all.begin(),all.end());
 
+   /*
    std::cout << list << "\n\n";
    for(const auto& a : all.front().first)
       std::cout << " -> " << a.b;
    std::cout << "\n\n";
-   int result = all.front().second;
+   */
+   unsigned result = all.front().second;
    std::cout << sb::white << "Part 1: " << sb::reset << result << "\n";
+}
+
+
+result_t route_solve2(container_t list, container_t route, dist_t node, unsigned dist, unsigned best)
+{
+   // add d to route
+   route.push_back(node);
+
+   // remove any impossible nodes
+   for(container_t::iterator i=list.begin(); i != list.end(); ) // increment inside
+   {
+      if(i->has(node.a))
+         i = list.erase(i);
+      else
+         ++i;
+   }
+
+   // exit condition
+   if(list.empty())
+      return std::make_pair(route, dist);
+
+   // select new paths
+   result_t best_result{container_t{},0};
+   for(dist_t& a : list)
+   {
+      if(!a.has_a(node.b))
+         continue;
+      unsigned new_dist = dist + a.dist;
+      result_t temp = route_solve2(list, route, a, new_dist, best);
+      if(temp.second <= best)
+         continue;
+      best = temp.second;
+      best_result = temp;
+   }
+   return best_result;
 }
 
 
 void part2(const container_t& list)
 {
-   int result = list.size();
+   std::vector<std::string> locs;
+   for(const auto& a : list)
+   {
+      locs.push_back(a.a);
+      locs.push_back(a.b);
+   }
+   std::sort(locs.begin(),locs.end());
+   locs.erase(std::unique(locs.begin(),locs.end()),locs.end());
+
+   result_t best{container_t{},0};
+   for(const std::string& loc : locs)
+   {
+      dist_t dummy;
+      dummy.a = "";
+      dummy.b = loc;
+      dummy.dist = 0;
+
+      result_t temp = route_solve2(list, container_t{}, dummy, 0, best.second);
+      if(temp.second > best.second)
+         best = temp;
+   }
+
+   /*
+   std::cout << list << "\n\n";
+   for(const auto& a : best.first)
+      std::cout << " -> " << a.b;
+   std::cout << "\n\n";
+   */
+   unsigned result = best.second;
 
    std::cout << sb::white << "Part 2: " << sb::reset << result << "\n";
 }
